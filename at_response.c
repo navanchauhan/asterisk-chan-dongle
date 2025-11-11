@@ -371,8 +371,14 @@ static int at_response_error (struct pvt* pvt, at_res_t res)
 				ast_debug(1, "[%s] Dongle has NO (QPCMV) voice support\n", PVT_ID(pvt));
 				pvt->has_voice_quectel = 0;
 
+				/* Force enable voice for SIMCOM SIM7600 modems */
 				if (pvt->has_voice == 0) {
-					ast_log(LOG_WARNING, "[%s] Dongle has NO voice support\n", PVT_ID(pvt));
+					if (strstr(pvt->model, "SIM7600") != NULL || strstr(pvt->manufacturer, "SIMCOM") != NULL) {
+						ast_log(LOG_NOTICE, "[%s] Forcing voice support for SIMCOM modem\n", PVT_ID(pvt));
+						pvt->has_voice = 1;
+					} else {
+						ast_log(LOG_WARNING, "[%s] Dongle has NO voice support\n", PVT_ID(pvt));
+					}
 				}
 				break;
 /*
