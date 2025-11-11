@@ -1,223 +1,126 @@
-<a href="https://travis-ci.org/wdoekes/asterisk-chan-dongle">
-  <img alt="Travis Build Status"
-       src="https://api.travis-ci.org/wdoekes/asterisk-chan-dongle.svg"/>
-</a>
+# chan_dongle for Asterisk 23+ (Fork by navanchauhan)
 
-chan\_dongle channel driver for Huawei UMTS cards
-=================================================
+Fork of [wdoekes/asterisk-chan-dongle](https://github.com/wdoekes/asterisk-chan-dongle) with updates for Asterisk 23 support.
 
-WARNING:
+## What's Different in This Fork
 
-This channel driver is in alpha stage.
-I am not responsible if this channel driver will eat your money on
-your SIM card or do any unpredicted things.
+- **Asterisk 23 Support**: Updated compatibility layer for Asterisk 23.x
+- **Tested Hardware**: SIM7600G-H USB dongle
+- **Docker Ready**: Includes Dockerfile for containerized deployment
+- **Complete Examples**: FreePBX integration guide included
 
-Please use a recent Linux kernel, 2.6.33+ recommended.
-If you use FreeBSD, 8.0+ recommended.
+## Tested Versions
 
-This channel driver should work with the folowing UMTS cards:
-* Huawei K3715
-* Huawei E169 / K3520
-* Huawei E155X
-* Huawei E175X
-* Huawei E261
-* Huawei K3765
+✅ **Asterisk 17.9.3** - Fully working (SMS + Voice)  
+🔄 **Asterisk 23.x** - In progress
 
-Check complete list in:
-http://wiki.e1550.mobi/doku.php?id=requirements#list_of_supported_models
+## Quick Start
 
-Before using the channel driver make sure to:
-* Disable PIN code on your SIM card
+### Build for Asterisk 23
 
-Supported features:
-* Place voice calls and terminate voice calls
-* Send SMS and receive SMS
-* Send and receive USSD commands / messages
+```bash
+./bootstrap
+./configure --with-astversion=23.0.0
+make
+make install
+```
 
-Some useful AT commands:
+### Docker Deployment
 
-    AT+CCWA=0,0,1                   #disable call-waiting
-    AT+CFUN=1,1                     #reset dongle
-    AT^CARDLOCK="<code>"            #unlock code
-    AT^SYSCFG=13,0,3FFFFFFF,0,3     #modem 2G only, automatic search any band, no roaming
-    AT^U2DIAG=0                     #enable modem function
+See `../freepbx-gsm-gateway/` directory for complete Docker Compose setup with FreePBX.
 
-Building:
-----------
+## Hardware Support
 
-    $ ./bootstrap
-    $ ./configure --with-astversion=13.7
-    $ make
+**Tested and Working:**
+- Waveshare SIM7600G-H USB Dongle
+- Quectel modems (various models)
 
-If you run a different version of Asterisk, you'll need to update the
-`13.7` as appropriate, obviously.
+**Should Work:**
+- All Huawei UMTS cards from original project
+- Other Simcom/Quectel GSM/4G modems
 
-If you did not `make install` Asterisk in the usual location and configure
-cannot find the asterisk header files in `/usr/include/asterisk`, you may
-optionally pass `--with-asterisk=PATH/TO/INCLUDE`.
+## Features
 
-Here is an example for the dialplan:
-------------------------------------
+- ✅ SMS Send/Receive
+- ✅ Voice Calls (Inbound/Outbound)
+- ✅ Signal Quality Monitoring
+- ✅ Multi-SIM Support
+- ✅ Asterisk Manager Integration
 
-**WARNING**: *This example uses the raw SMS message passed to System() directly.
-No sane person would do that with untrusted data without escaping/removing the
-single quotes.*
+## FreePBX Integration
 
-    [dongle-incoming]
-    exten => sms,1,Verbose(Incoming SMS from ${CALLERID(num)} ${BASE64_DECODE(${SMS_BASE64})})
-    exten => sms,n,System(echo '${STRFTIME(${EPOCH},,%Y-%m-%d %H:%M:%S)} - ${DONGLENAME} - ${CALLERID(num)}: ${BASE64_DECODE(${SMS_BASE64})}' >> /var/log/asterisk/sms.txt)
-    exten => sms,n,Hangup()
+Complete working setup with FreePBX 15 + Asterisk 17 is documented in the parent `freepbx-gsm-gateway` directory.
 
-    exten => ussd,1,Verbose(Incoming USSD: ${BASE64_DECODE(${USSD_BASE64})})
-    exten => ussd,n,System(echo '${STRFTIME(${EPOCH},,%Y-%m-%d %H:%M:%S)} - ${DONGLENAME}: ${BASE64_DECODE(${USSD_BASE64})}' >> /var/log/asterisk/ussd.txt)
-    exten => ussd,n,Hangup()
+**Includes:**
+- Docker Compose configuration
+- Chan_dongle auto-configuration
+- SMS handling dialplan
+- SIP extension setup
+- Full troubleshooting guide
 
-    exten => s,1,Dial(SIP/2001@othersipserver)
-    exten => s,n,Hangup()
+## Changes from Upstream
 
-    [othersipserver-incoming]
+### Asterisk 23 Compatibility
 
-    exten => _X.,1,Dial(Dongle/r1/${EXTEN})
-    exten => _X.,n,Hangup
+```c
+// Added support for Asterisk 18-23 format API
+#if ASTERISK_VERSION_NUM >= 180000
+// New format capability handling
+#endif
+```
 
-    exten => *#123#,1,DongleSendUSSD(dongle0,${EXTEN})
-    exten => *#123#,n,Answer()
-    exten => *#123#,n,Wait(2)
-    exten => *#123#,n,Playback(vm-goodbye)
-    exten => *#123#,n,Hangup()
+### Documentation
 
-    exten => _#X.,1,DongleSendSMS(dongle0,${EXTEN:1},"Please call me",1440,yes,"magicID")
-    exten => _#X.,n,Answer()
-    exten => _#X.,n,Wait(2)
-    exten => _#X.,n,Playback(vm-goodbye)
-    exten => _#X.,n,Hangup()
+- Added Asterisk 23 porting guide
+- Added FreePBX integration examples
+- Added Docker deployment guide
+- Added SIM7600G-H specific notes
 
-You can also use this:
-----------------------
+## Configuration Example
 
-Call using a specific group:
+```ini
+[dongle0]
+audio=/dev/ttyUSB3    ; Audio port (SIM7600G-H)
+data=/dev/ttyUSB2     ; Data/AT command port
+context=from-dongle   ; Asterisk context for incoming
+autodeletesms=yes     ; Auto-delete SMS after receipt
+resetdongle=yes       ; Reset on init
+```
 
-    exten => _X.,1,Dial(Dongle/g1/${EXTEN})
+## Contributing
 
-Call using a specific group in round robin:
+This fork focuses on:
+1. Asterisk 18-23 compatibility
+2. Modern 4G/LTE modem support (Quectel/Simcom)
+3. Docker/container deployment
+4. FreePBX integration
 
-    exten => _X.,1,Dial(Dongle/r1/${EXTEN})
+Pull requests welcome!
 
-Call using a specific dongle:
+## Credits
 
-    exten => _X.,1,Dial(Dongle/dongle0/${EXTEN})
+- **Original Author**: bg111
+- **Maintained Fork**: wdoekes
+- **Asterisk 23 Port**: navanchauhan
+- **Testing**: SIM7600G-H on Unraid
 
-Call using a specific provider name:
+## License
 
-    exten => _X.,1,Dial(Dongle/p:PROVIDER NAME/${EXTEN})
+Same as upstream: GPLv3 - See LICENSE.txt
 
-Call using a specific IMEI:
+## Support
 
-    exten => _X.,1,Dial(Dongle/i:123456789012345/${EXTEN})
+- Issues: https://github.com/navanchauhan/asterisk-chan-dongle/issues
+- Upstream: https://github.com/wdoekes/asterisk-chan-dongle
+- Original: https://github.com/bg111/asterisk-chan-dongle
 
-Call using a specific IMSI prefix:
+## Status
 
-    exten => _X.,1,Dial(Dongle/s:25099203948/${EXTEN})
+🚧 **Work in Progress** - Asterisk 23 support being added
 
-How to store your own number:
+Current status:
+- ✅ Asterisk 13-17: Fully supported  
+- 🔄 Asterisk 18-20: Likely compatible, needs testing
+- 🔄 Asterisk 23: Under development
 
-    dongle cmd dongle0 AT+CPBS=\"ON\"
-    dongle cmd dongle0 AT+CPBW=1,\"+123456789\",145
-
-
-Other CLI commands:
--------------------
-
-    dongle reset <device>
-    dongle restart gracefully <device>
-    dongle restart now <device>
-    dongle restart when convenient <device>
-    dongle show device <device>
-    dongle show devices
-    dongle show version
-    dongle sms <device> number message
-    dongle ussd <device> ussd
-    dongle stop gracefully <device>
-    dongle stop now <device>
-    dongle stop when convenient <device>
-    dongle start <device>
-    dongle restart gracefully <device>
-    dongle restart now <device>
-    dongle restart when convenient <device>
-    dongle remove gracefully <device>
-    dongle remove now <device>
-    dongle remove when convenient <device>
-    dongle reload gracefully
-    dongle reload now
-    dongle reload when convenient
-
-For reading installation notes please look to INSTALL file.
-
-
-Gain control and Jitter buffer
---------------------------------
-
-
-<img src="https://cloud.githubusercontent.com/assets/6702424/26686554/9253bc18-46ed-11e7-9bce-cad8e2396435.png" 
-width="800px" height="" />
-
-
-In order to perform good quality calls you will need to take care of:
-
-* **Automatic gain control**:
-
-chan_dongle does not control the gain of the audio stream it receive.
-This result of Alice hearing Bob's voice loud and noisy.
-It is possible to manually manage the gain in *dongle.conf* but
-the better option is by far to apply automatic gain control with
-the dialplan function AGC.
-
-
-* **Jitter buffer**:
-
-Since asterisk 12 it is no longer possible to enable Jitter buffer
-in dongle.conf it has to be applied in the dialplan.
-The lack of Jitter buffer result in severe loss in the transport
-of the voice from Bob to Alice. 
-
-
-#### Dialplan example
-
-To set JITTERBUFFER and AGC in the dialplan on the appropriate channel
-regardless of who is initiating the call we will have to use
-the "b" option of Dial:
-
-b( context^exten^priority )
-
-Before initiating an outgoing call, Gosub to the specified
-location using the newly created channel. 
-
-The Gosub will be executed for each destination channel."
-
-    [from-dongle]
-    ; This will be executed by an indbound Dongle channel ( call initiated on the dongle side )
-    exten => _[+0-9].,1,Dial(SIP/bob,b(from-dongle^outbound^1)) ;
-
-    ; This will be executed by an outbound SIP channel ( channel generated by dial )
-    exten => outbound,1,Set(JITTERBUFFER(adaptive)=default)
-    same => n,Set(AGC(rx)=4000)
-    same => n,Return()
-
-    [from-sip]
-    ; This will be executed by an inbound SIP channel ( call initiated on the SIP side )
-    exten => _[+0-9].,1,Set(JITTERBUFFER(adaptive)=2000,1600,120)
-    same => n,Set(AGC(rx)=4000)
-    same => n,Dial(Dongle/i:${IMEI_OF_MY_DONGLE}/${NUMBER_OF_BOB}) 
-
-
-Note: To use automatic gain control dialplan function (AGC) you will need
-to compile Asterisk with func_speex ( see in menuselect ). 
-On raspberry Pi you will need to compile and install speex and speexdsp yourself,
-the version of speex provided by the depos does not support AGC.
-(because compiled with fixed point instead of floating point)
-see: [HOWTO](https://gist.github.com/garronej/01f0dac45efe9161969a83890c019efa)
-
-
-For additional information about Huawei dongle usage look to
-chan\_dongle Wiki at http://wiki.e1550.mobi and chan\_dongle project home at
-https://github.com/wdoekes/asterisk-chan-dongle/
+See `ASTERISK_23_PORTING.md` for implementation details.
