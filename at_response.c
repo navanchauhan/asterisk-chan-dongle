@@ -376,6 +376,7 @@ static int at_response_error (struct pvt* pvt, at_res_t res)
 					if (strstr(pvt->model, "SIM7600") != NULL || strstr(pvt->manufacturer, "SIMCOM") != NULL) {
 						ast_log(LOG_NOTICE, "[%s] Forcing voice support for SIMCOM modem\n", PVT_ID(pvt));
 						pvt->has_voice = 1;
+						pvt->has_voice_quectel = 1;
 					} else {
 						ast_log(LOG_WARNING, "[%s] Dongle has NO voice support\n", PVT_ID(pvt));
 					}
