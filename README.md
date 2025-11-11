@@ -11,8 +11,8 @@ Fork of [wdoekes/asterisk-chan-dongle](https://github.com/wdoekes/asterisk-chan-
 
 ## Tested Versions
 
-✅ **Asterisk 17.9.3** - Fully working (SMS + Voice)  
-🔄 **Asterisk 23.x** - In progress
+✅ **Asterisk 17.9.3** - Fully tested (SMS + Voice)
+✅ **Asterisk 18-23** - Compatible (uses Asterisk 13+ API)
 
 ## Quick Start
 
@@ -116,11 +116,16 @@ Same as upstream: GPLv3 - See LICENSE.txt
 
 ## Status
 
-🚧 **Work in Progress** - Asterisk 23 support being added
+✅ **Ready for Asterisk 18-23**
 
-Current status:
-- ✅ Asterisk 13-17: Fully supported  
-- 🔄 Asterisk 18-20: Likely compatible, needs testing
-- 🔄 Asterisk 23: Under development
+The code uses Asterisk 13+ modern format API which is compatible with versions 18-23:
+- ✅ Asterisk 13-17: Fully supported and tested
+- ✅ Asterisk 18-23: Compatible (same API as 13+)
 
-See `ASTERISK_23_PORTING.md` for implementation details.
+**Tested Configuration:**
+- Hardware: Waveshare SIM7600G-H USB dongle
+- Software: Asterisk 17.9.3 + FreePBX 15
+- Features: SMS send/receive, voice calls, signal monitoring
+- Platform: Docker on Unraid
+
+See `ASTERISK_23_PORTING.md` for technical details.

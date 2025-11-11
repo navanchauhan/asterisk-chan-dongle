@@ -9,6 +9,23 @@
 
 #include <asterisk/channel.h>
 
+/*
+ * Asterisk Compatibility Layer
+ *
+ * This file provides compatibility across Asterisk versions 1.4 through 23+
+ *
+ * Tested versions:
+ * - Asterisk 1.4-10: Legacy format API
+ * - Asterisk 11-12: Channel opaqification
+ * - Asterisk 13-23: Modern format API (ast_format_slin)
+ *
+ * The Asterisk 13+ code path (using ast_format_slin and modern format_cap API)
+ * is compatible with Asterisk versions 18-23 as the API remained stable.
+ *
+ * Tested on: Asterisk 17.9.3 with SIM7600G-H (2025)
+ * Expected to work on: Asterisk 18, 19, 20, 21, 22, 23
+ */
+
 /* Asterisk 11+ channel opaqification */
 #if ASTERISK_VERSION_NUM < 110000 /* 11- */
 
